@@ -9,7 +9,10 @@
     "Vhost": "owm",
     "User": "owm",
     "Passwd": "owm",
-	"Workers": 2
+	"Exchange": "owm",
+	"ExchangeType": "topic",
+	"RoutingKey": "owm",
+	"Workers": 1
   },
   "Debug": true
 }

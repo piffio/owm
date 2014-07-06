@@ -19,6 +19,9 @@ type aqmp struct {
 	Vhost string
 	User string
 	Passwd string
+	Exchange string
+	ExchangeType string
+	RoutingKey string
 	Workers int
 }
 

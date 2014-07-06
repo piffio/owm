@@ -33,7 +33,7 @@ func main() {
 	}
 
 	// Create RabbitMQ workers
-	aqmpStatus := make(chan string)
+	aqmpStatus := make(chan int)
 	aqmpMessages := make(chan string)
 	if cfg.Debug {
 		fmt.Println("Initializing AQMP Workers")
@@ -49,7 +49,10 @@ func main() {
 	i = 0
 	for i < cfg.Aqmp.Workers {
 		ready := <-aqmpStatus
-		fmt.Println(ready)
+		if ready < 0 {
+			fmt.Println("Could not initialize AMQP workers, exiting")
+			os.Exit(1)
+		}
 		i++
 	}
 
