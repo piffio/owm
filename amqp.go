@@ -30,7 +30,6 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) err
 		return fmt.Errorf("Exchange Declare: %s", err)
 	}
 
-/*
 	if (cfg.Debug) {
 		fmt.Println("Enable publishing confirm")
 	}
@@ -39,8 +38,6 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) err
 	}
 
 	ack, nack := channel.NotifyConfirm(make(chan uint64, 1), make(chan uint64, 1))
-	defer confirmOne(ack, nack)
-*/
 
 	// Send the Message
 	if err = channel.Publish(
@@ -58,6 +55,14 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) err
 		},
 	); err != nil {
 		return fmt.Errorf("Exchange Publish: %s", err)
+	}
+
+	// Wait for message confirmation
+	select {
+		case tag := <-ack:
+			fmt.Println(fmt.Sprintf("confirmed delivery with delivery tag: %d", tag))
+		case tag := <-nack:
+			fmt.Println(fmt.Sprintf("failed delivery of delivery tag: %d", tag))
 	}
 
 	return nil
