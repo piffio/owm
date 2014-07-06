@@ -2,7 +2,7 @@
   "Listener": {
     "Port": 9999
   },
-  "Aqmp": {
+  "Amqp": {
     "Type": "rabbitmq",
     "Host": "localhost",
     "Port": 5672,

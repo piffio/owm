@@ -15,12 +15,12 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) err
 
 	// Declare the Exchange
 	if (cfg.Debug) {
-		fmt.Println("Declaring Exchange ", cfg.Aqmp.Exchange)
+		fmt.Println("Declaring Exchange ", cfg.Amqp.Exchange)
 	}
 
 	if err := channel.ExchangeDeclare(
-		cfg.Aqmp.Exchange,     // name
-		cfg.Aqmp.ExchangeType, // type
+		cfg.Amqp.Exchange,     // name
+		cfg.Amqp.ExchangeType, // type
 		true,         // durable
 		false,        // auto-deleted
 		false,        // internal
@@ -44,8 +44,8 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) err
 
 	// Send the Message
 	if err = channel.Publish(
-		cfg.Aqmp.Exchange,     // publish to an exchange
-		cfg.Aqmp.RoutingKey, // routing to 0 or more queues
+		cfg.Amqp.Exchange,     // publish to an exchange
+		cfg.Amqp.RoutingKey, // routing to 0 or more queues
 		false,      // mandatory
 		false,      // immediate
 		amqp.Publishing{
@@ -70,7 +70,7 @@ func cleanupConnection(cfg *Configuration, workNum int, connection *amqp.Connect
 	connection.Close()
 }
 
-func AqmpWorker (cfg *Configuration, i int, aqmpStatus chan int, aqmpMessages chan string) {
+func AmqpWorker (cfg *Configuration, i int, amqpStatus chan int, amqpMessages chan string) {
 	if cfg.Debug {
 		fmt.Println("Initializing AQMP Worker", i)
 	}
@@ -78,11 +78,11 @@ func AqmpWorker (cfg *Configuration, i int, aqmpStatus chan int, aqmpMessages ch
 	// Set up Worker connections
 	// "amqp://guest:guest@localhost:5672/"
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%d/%s",
-			cfg.Aqmp.User,
-			cfg.Aqmp.Passwd,
-			cfg.Aqmp.Host,
-			cfg.Aqmp.Port,
-			cfg.Aqmp.Vhost)
+			cfg.Amqp.User,
+			cfg.Amqp.Passwd,
+			cfg.Amqp.Host,
+			cfg.Amqp.Port,
+			cfg.Amqp.Vhost)
 
 	if cfg.Debug {
 		fmt.Printf(fmt.Sprintf("[Worker %d] Connecting to %q", i, uri))
@@ -93,17 +93,17 @@ func AqmpWorker (cfg *Configuration, i int, aqmpStatus chan int, aqmpMessages ch
 	connection, err := amqp.Dial(uri)
 	if err != nil {
 		fmt.Println(fmt.Errorf("[Worker %d] Connection error: %s", i, err))
-		aqmpStatus <- -1
+		amqpStatus <- -1
 	}
 	defer cleanupConnection(cfg, i, connection)
 
 	// Positive value means success
 	// TODO: Use an enum to allow for different states
-	aqmpStatus <- 1
+	amqpStatus <- 1
 
 	// Listen for new incoming messages
 	for {
-		message := <-aqmpMessages
+		message := <-amqpMessages
 		publishMsg(cfg, connection, message)
 		if cfg.Debug {
 			fmt.Println(fmt.Sprintf("[Worker %d] Got message \"%s\"", i, message))
