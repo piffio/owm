@@ -9,7 +9,7 @@ func handler(w http.ResponseWriter, r *http.Request, amqpMessages chan string) {
 	fmt.Println("Inside handler")
 	fmt.Fprintf(w, "Hello world from my Go program!\n")
 
-	amqpMessages <-"got one request"
+	amqpMessages <- "got one request"
 }
 
 func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages chan string) {

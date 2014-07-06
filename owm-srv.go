@@ -1,9 +1,9 @@
 package main
 
 import (
+	"code.google.com/p/getopt"
 	"fmt"
 	"os"
-	"code.google.com/p/getopt"
 )
 
 func main() {

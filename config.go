@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json" // For config file
 	"fmt"
 	"os"
-	"encoding/json" // For config file
 )
 
 // Listener Configuration
@@ -13,26 +13,26 @@ type listener struct {
 
 // RabbitMQ Configuration
 type amqpCfg struct {
-	Type string
-	Host string
-	Port int
-	Vhost string
-	User string
-	Passwd string
-	Exchange string
+	Type         string
+	Host         string
+	Port         int
+	Vhost        string
+	User         string
+	Passwd       string
+	Exchange     string
 	ExchangeType string
-	RoutingKey string
-	Workers int
+	RoutingKey   string
+	Workers      int
 }
 
 // Main configuration structure
 type Configuration struct {
-	Debug bool
+	Debug    bool
 	Listener listener
-	Amqp amqpCfg
+	Amqp     amqpCfg
 }
 
-func ReadConfig (f string) (*Configuration, error) {
+func ReadConfig(f string) (*Configuration, error) {
 	file, _ := os.Open(f)
 	decoder := json.NewDecoder(file)
 	configuration := Configuration{}
