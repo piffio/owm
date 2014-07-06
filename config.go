@@ -12,13 +12,16 @@ type listener struct {
 }
 
 // RabbitMQ Configuration
-type aqmp struct {
+type amqpCfg struct {
 	Type string
 	Host string
 	Port int
 	Vhost string
 	User string
 	Passwd string
+	Exchange string
+	ExchangeType string
+	RoutingKey string
 	Workers int
 }
 
@@ -26,7 +29,7 @@ type aqmp struct {
 type Configuration struct {
 	Debug bool
 	Listener listener
-	Aqmp aqmp
+	Amqp amqpCfg
 }
 
 func ReadConfig (f string) (*Configuration, error) {
