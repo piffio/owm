@@ -18,7 +18,6 @@ func main() {
 		getopt.Usage()
 		os.Exit(0)
 	}
-	fmt.Println(*cmd_cfg)
 
 	cfg, err := ReadConfig(*cmd_cfg)
 
@@ -30,7 +29,7 @@ func main() {
 	go LoggerWorker(cfg)
 
 	LogDbg("Successfully parsed file %s", *cmd_cfg)
-	//LogDbg(cfg)
+	// XXX pretty print the parsed conf in debug LogDbg(cfg)
 
 	// Create RabbitMQ workers
 	amqpStatus := make(chan int)

@@ -13,9 +13,7 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) err
 	}
 
 	// Declare the Exchange
-	if cfg.Debug {
-		fmt.Println("Declaring Exchange ", cfg.Amqp.Exchange)
-	}
+	LogDbg("Declaring Exchange ", cfg.Amqp.Exchange)
 
 	if err := channel.ExchangeDeclare(
 		cfg.Amqp.Exchange,     // name
@@ -29,9 +27,7 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) err
 		return fmt.Errorf("Exchange Declare: %s", err)
 	}
 
-	if cfg.Debug {
-		fmt.Println("Enable publishing confirm")
-	}
+	LogDbg("Enable publishing confirm")
 	if err := channel.Confirm(false); err != nil {
 		return fmt.Errorf("Channel could not be put into confirm mode: %s", err)
 	}
@@ -59,25 +55,21 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) err
 	// Wait for message confirmation
 	select {
 	case tag := <-ack:
-		fmt.Println(fmt.Sprintf("confirmed delivery with delivery tag: %d", tag))
+		LogDbg("confirmed delivery with delivery tag: %d", tag)
 	case tag := <-nack:
-		fmt.Println(fmt.Sprintf("failed delivery of delivery tag: %d", tag))
+		LogDbg("failed delivery of delivery tag: %d", tag)
 	}
 
 	return nil
 }
 
 func cleanupConnection(cfg *Configuration, workNum int, connection *amqp.Connection) {
-	if cfg.Debug {
-		fmt.Println(fmt.Sprintf("[Worker %d] Closing connection", workNum))
-	}
+	LogDbg("[Worker %d] Closing connection", workNum)
 	connection.Close()
 }
 
 func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages chan string) {
-	if cfg.Debug {
-		fmt.Println("Initializing AQMP Worker", i)
-	}
+	LogDbg("Initializing AQMP Worker %d", i)
 
 	// Set up Worker connections
 	// "amqp://guest:guest@localhost:5672/"
@@ -88,15 +80,13 @@ func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages cha
 		cfg.Amqp.Port,
 		cfg.Amqp.Vhost)
 
-	if cfg.Debug {
-		fmt.Printf(fmt.Sprintf("[Worker %d] Connecting to %q", i, uri))
-	}
+	LogDbg("[Worker %d] Connecting to %q", i, uri)
 
 	// XXX Move this in a seperate function to be called
 	// On reconnection as well
 	connection, err := amqp.Dial(uri)
 	if err != nil {
-		fmt.Println(fmt.Errorf("[Worker %d] Connection error: %s", i, err))
+		LogErr("%s", fmt.Errorf("[Worker %d] Connection error: %s", i, err))
 		amqpStatus <- -1
 	}
 	defer cleanupConnection(cfg, i, connection)
@@ -109,8 +99,6 @@ func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages cha
 	for {
 		message := <-amqpMessages
 		publishMsg(cfg, connection, message)
-		if cfg.Debug {
-			fmt.Println(fmt.Sprintf("[Worker %d] Got message \"%s\"", i, message))
-		}
+		LogDbg("[Worker %d] Got message \"%s\"", i, message)
 	}
 }
