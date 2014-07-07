@@ -1,10 +1,10 @@
 package main
 
 import (
-	"os"
 	"fmt"
 	"log"
 	"log/syslog"
+	"os"
 )
 
 var logDbgChan = make(chan string)
@@ -12,35 +12,35 @@ var logInfChan = make(chan string)
 var logWarnChan = make(chan string)
 var logErrChan = make(chan string)
 
-func LogDbg(format string,  params...interface{}) {
+func LogDbg(format string, params ...interface{}) {
 	if len(params) > 0 {
-		logDbgChan <-fmt.Sprintf(format, params[0])
+		logDbgChan <- fmt.Sprintf(format, params[0])
 	} else {
-		logDbgChan <-format
+		logDbgChan <- format
 	}
 }
 
-func LogInf(format string,  params...interface{}) {
+func LogInf(format string, params ...interface{}) {
 	if len(params) > 0 {
-		logInfChan <-fmt.Sprintf(format, params[0])
+		logInfChan <- fmt.Sprintf(format, params[0])
 	} else {
-		logInfChan <-format
+		logInfChan <- format
 	}
 }
 
-func LogWarn(format string,  params...interface{}) {
+func LogWarn(format string, params ...interface{}) {
 	if len(params) > 0 {
-		logWarnChan <-fmt.Sprintf(format, params[0])
+		logWarnChan <- fmt.Sprintf(format, params[0])
 	} else {
-		logWarnChan <-format
+		logWarnChan <- format
 	}
 }
 
-func LogErr(format string,  params...interface{}) {
+func LogErr(format string, params ...interface{}) {
 	if len(params) > 0 {
-		logErrChan <-fmt.Sprintf(format, params[0])
+		logErrChan <- fmt.Sprintf(format, params[0])
 	} else {
-		logErrChan <-format
+		logErrChan <- format
 	}
 }
 
@@ -61,7 +61,9 @@ func LoggerWorker(cfg *Configuration) {
 			}
 
 			file, err := os.Create(cfg.Log.LogFile)
-			if err != nil { panic(err) }
+			if err != nil {
+				panic(err)
+			}
 
 			defer func() {
 				if err := file.Close(); err != nil {
@@ -83,14 +85,14 @@ func LoggerWorker(cfg *Configuration) {
 
 	for {
 		select {
-			case msg := <-logInfChan:
+		case msg := <-logInfChan:
 			if logf != nil {
 				logf.Println(msg)
 			}
 			if logs != nil {
 				logs.Info(msg)
 			}
-			case msg := <-logDbgChan:
+		case msg := <-logDbgChan:
 			if cfg.Debug {
 				if logf != nil {
 					logf.Println(msg)

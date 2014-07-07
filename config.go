@@ -26,9 +26,9 @@ type amqpCfg struct {
 }
 
 type logCfg struct {
-	Type	string
-	SyslogIdent	string
-	LogFile	string
+	Type        string
+	SyslogIdent string
+	LogFile     string
 }
 
 // Main configuration structure
