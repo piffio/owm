@@ -14,5 +14,10 @@
 	"RoutingKey": "owm",
 	"Workers": 1
   },
+  "Log": {
+	"Type": "syslog",
+	"SyslogIdent": "owm",
+	"LogFile": "/tmp/owm-srv.log"
+  },
   "Debug": true
 }

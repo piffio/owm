@@ -25,11 +25,18 @@ type amqpCfg struct {
 	Workers      int
 }
 
+type logCfg struct {
+	Type        string
+	SyslogIdent string
+	LogFile     string
+}
+
 // Main configuration structure
 type Configuration struct {
 	Debug    bool
 	Listener listener
 	Amqp     amqpCfg
+	Log      logCfg
 }
 
 func ReadConfig(f string) (*Configuration, error) {
