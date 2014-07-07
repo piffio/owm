@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/streadway/amqp"
+	"labix.org/v2/mgo/bson"
 )
 
-func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) error {
+func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) error {
 	// Get a Channel
 	channel, err := connection.Channel()
 	if err != nil {
@@ -44,7 +45,7 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) err
 			Headers:         amqp.Table{},
 			ContentType:     "text/plain",
 			ContentEncoding: "",
-			Body:            []byte(msg),
+			Body:            msg,
 			DeliveryMode:    amqp.Transient, // 1=non-persistent, 2=persistent
 			Priority:        0,              // 0-9
 		},
@@ -68,7 +69,7 @@ func cleanupConnection(cfg *Configuration, workNum int, connection *amqp.Connect
 	connection.Close()
 }
 
-func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages chan string) {
+func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages chan TestResults) {
 	LogDbg("Initializing AQMP Worker %d", i)
 
 	// Set up Worker connections
@@ -98,7 +99,13 @@ func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages cha
 	// Listen for new incoming messages
 	for {
 		message := <-amqpMessages
-		publishMsg(cfg, connection, message)
+		msgByte, err := bson.Marshal(message)
+		if err != nil {
+			LogErr("%s", fmt.Errorf("[Worker %d] Can't Marshall message: %s", i, err))
+			amqpStatus <- -1
+		}
+
+		publishMsg(cfg, connection, msgByte)
 		LogDbg("[Worker %d] Got message \"%s\"", i, message)
 	}
 }

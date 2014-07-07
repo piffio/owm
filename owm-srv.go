@@ -33,7 +33,7 @@ func main() {
 
 	// Create RabbitMQ workers
 	amqpStatus := make(chan int)
-	amqpMessages := make(chan string)
+	amqpMessages := make(chan TestResults)
 	LogDbg("Initializing AQMP Workers")
 
 	i := 0
