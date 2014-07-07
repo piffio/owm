@@ -27,17 +27,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	if cfg.Debug {
-		fmt.Println("Successfully parsed file", *cmd_cfg)
-		fmt.Println(cfg)
-	}
+	go LoggerWorker(cfg)
+
+	LogDbg("Successfully parsed file %s", *cmd_cfg)
+	//LogDbg(cfg)
 
 	// Create RabbitMQ workers
 	amqpStatus := make(chan int)
 	amqpMessages := make(chan string)
-	if cfg.Debug {
-		fmt.Println("Initializing AQMP Workers")
-	}
+	LogDbg("Initializing AQMP Workers")
 
 	i := 0
 	for i < cfg.Amqp.Workers {
@@ -50,7 +48,7 @@ func main() {
 	for i < cfg.Amqp.Workers {
 		ready := <-amqpStatus
 		if ready < 0 {
-			fmt.Println("Could not initialize AMQP workers, exiting")
+			LogErr("Could not initialize AMQP workers, exiting")
 			os.Exit(1)
 		}
 		i++
