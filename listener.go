@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"code.google.com/p/gorest"
+	"labix.org/v2/mgo/bson"
 )
 
-var outChan chan TestResults
+var outChan chan []byte
 
 /*
 func handler(w http.ResponseWriter, r *http.Request, amqpMessages chan TestResults) {
@@ -17,7 +18,14 @@ func handler(w http.ResponseWriter, r *http.Request, amqpMessages chan TestResul
 }*/
 
 func (serv OwmService) PostResults(testResults TestResults) {
-	outChan <- testResults
+	message, err := bson.Marshal(testResults)
+
+	if err != nil {
+		LogErr("%s", fmt.Errorf("Can't Marshall message: %s", err))
+		return
+	}
+
+	outChan <- message
 
 	serv.ResponseBuilder().SetResponseCode(200)
 	return
@@ -30,7 +38,7 @@ type OwmService struct {
 	postResults gorest.EndPoint `method:"POST" path:"/postResults/" postdata:"TestResults"`
 }
 
-func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages chan TestResults) {
+func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages chan []byte) {
 	LogDbg("Initializing Listener Worker")
 
 	outChan = amqpMessages

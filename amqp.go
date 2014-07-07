@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/streadway/amqp"
-	"labix.org/v2/mgo/bson"
 )
 
 func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) error {
@@ -14,7 +13,7 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) err
 	}
 
 	// Declare the Exchange
-	LogDbg("Declaring Exchange ", cfg.Amqp.Exchange)
+	LogDbg("Declaring Exchange \"%s\"", cfg.Amqp.Exchange)
 
 	if err := channel.ExchangeDeclare(
 		cfg.Amqp.Exchange,     // name
@@ -69,7 +68,7 @@ func cleanupConnection(cfg *Configuration, workNum int, connection *amqp.Connect
 	connection.Close()
 }
 
-func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages chan TestResults) {
+func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages chan []byte) {
 	LogDbg("Initializing AQMP Worker %d", i)
 
 	// Set up Worker connections
@@ -99,13 +98,8 @@ func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages cha
 	// Listen for new incoming messages
 	for {
 		message := <-amqpMessages
-		msgByte, err := bson.Marshal(message)
-		if err != nil {
-			LogErr("%s", fmt.Errorf("[Worker %d] Can't Marshall message: %s", i, err))
-			amqpStatus <- -1
-		}
 
-		publishMsg(cfg, connection, msgByte)
-		LogDbg("[Worker %d] Got message \"%s\"", i, message)
+		LogDbg("[Worker %d] Got message \"%s\"", i, string(message))
+		publishMsg(cfg, connection, message)
 	}
 }
