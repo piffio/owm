@@ -14,6 +14,7 @@ func (serv OwmService) PostResults(testResults TestResults) {
 		AgentId: proto.Uint64(testResults.AgentId),
 		URI: proto.String(testResults.URI),
 		Timestamp: proto.String(testResults.Timestamp),
+		TestData: proto.String(testResults.TestData),
 	}
 
 	data, err := proto.Marshal(message)
