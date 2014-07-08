@@ -1,4 +1,4 @@
-owm-srv
+OwmAPI
 =======
 
-Owm Server
+This is the API daemon for the OWM framework
