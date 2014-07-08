@@ -106,7 +106,7 @@ func AmqpWorker(cfg *Configuration, workId int, amqpStatus chan int, amqpMessage
 				LogErr("Could not Unmarshal message")
 			}
 
-			LogDbg(fmt.Sprintf("[Worker %d] Got message \"%+v\"", workId, data))
+			LogDbg("[Worker %d] Got message \"%+v\"", workId, data)
 		}
 		publishMsg(cfg, connection, message)
 	}
