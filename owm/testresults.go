@@ -1,4 +1,4 @@
-package main
+package owm
 
 type TestResults struct {
 	AgentId	uint64

@@ -5,12 +5,13 @@ import (
 	"net/http"
 	"code.google.com/p/gorest"
 	"code.google.com/p/goprotobuf/proto"
+	"github.com/piffio/owmapi/owm"
 )
 
 var outChan chan []byte
 
-func (serv OwmService) PostResults(testResults TestResults) {
-	message := &TestResultsProto {
+func (serv OwmService) PostResults(testResults owm.TestResults) {
+	message := &owm.TestResultsProto {
 		AgentId: proto.Uint64(testResults.AgentId),
 		URI: proto.String(testResults.URI),
 		Timestamp: proto.String(testResults.Timestamp),
@@ -20,7 +21,7 @@ func (serv OwmService) PostResults(testResults TestResults) {
 	data, err := proto.Marshal(message)
 
 	if err != nil {
-		LogErr("%s", fmt.Errorf("Can't Marshall message: %s", err))
+		owm.LogErr("%s", fmt.Errorf("Can't Marshall message: %s", err))
 		return
 	}
 
@@ -33,11 +34,11 @@ func (serv OwmService) PostResults(testResults TestResults) {
 type OwmService struct {
 	gorest.RestService `root:"/owm/" consumes:"application/json" produces:"application/json"`
 
-	postResults gorest.EndPoint `method:"POST" path:"/postResults/" postdata:"TestResults"`
+	postResults gorest.EndPoint `method:"POST" path:"/postResults/" postdata:"owm.TestResults"`
 }
 
-func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages chan []byte) {
-	LogDbg("Initializing Listener Worker")
+func ListenerWorker(cfg *owm.Configuration, listenerStatus chan string, amqpMessages chan []byte) {
+	owm.LogDbg("Initializing Listener Worker")
 
 	outChan = amqpMessages
 

@@ -1,4 +1,4 @@
-package main;
+package owm;
 
 message TestResultsProto {
 	required uint64 AgentId = 1;

@@ -1,4 +1,4 @@
-package main
+package owm
 
 import (
 	"encoding/json" // For config file

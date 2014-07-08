@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"code.google.com/p/goprotobuf/proto"
+	"github.com/piffio/owmapi/owm"
 )
 
-func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) error {
+func publishMsg(cfg *owm.Configuration, connection *amqp.Connection, msg []byte) error {
 	// Get a Channel
 	channel, err := connection.Channel()
 	if err != nil {
@@ -14,7 +15,7 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) err
 	}
 
 	// Declare the Exchange
-	LogDbg("Declaring Exchange \"%s\"", cfg.Amqp.Exchange)
+	owm.LogDbg("Declaring Exchange \"%s\"", cfg.Amqp.Exchange)
 
 	if err := channel.ExchangeDeclare(
 		cfg.Amqp.Exchange,     // name
@@ -28,7 +29,7 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) err
 		return fmt.Errorf("Exchange Declare: %s", err)
 	}
 
-	LogDbg("Enable publishing confirm")
+	owm.LogDbg("Enable publishing confirm")
 	if err := channel.Confirm(false); err != nil {
 		return fmt.Errorf("Channel could not be put into confirm mode: %s", err)
 	}
@@ -54,21 +55,21 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) err
 	// Wait for message confirmation
 	select {
 	case tag := <-ack:
-		LogDbg("confirmed delivery with delivery tag: %d", tag)
+		owm.LogDbg("confirmed delivery with delivery tag: %d", tag)
 	case tag := <-nack:
-		LogDbg("failed delivery of delivery tag: %d", tag)
+		owm.LogDbg("failed delivery of delivery tag: %d", tag)
 	}
 
 	return nil
 }
 
-func cleanupConnection(cfg *Configuration, workNum int, connection *amqp.Connection) {
-	LogDbg("[Worker %d] Closing connection", workNum)
+func cleanupConnection(cfg *owm.Configuration, workNum int, connection *amqp.Connection) {
+	owm.LogDbg("[Worker %d] Closing connection", workNum)
 	connection.Close()
 }
 
-func AmqpWorker(cfg *Configuration, workId int, amqpStatus chan int, amqpMessages chan []byte) {
-	LogDbg("Initializing AQMP Worker %d", workId)
+func AmqpWorker(cfg *owm.Configuration, workId int, amqpStatus chan int, amqpMessages chan []byte) {
+	owm.LogDbg("Initializing AQMP Worker %d", workId)
 
 	// Set up Worker connections
 	// "amqp://guest:guest@localhost:5672/"
@@ -79,13 +80,13 @@ func AmqpWorker(cfg *Configuration, workId int, amqpStatus chan int, amqpMessage
 		cfg.Amqp.Port,
 		cfg.Amqp.Vhost)
 
-	LogDbg("[Worker %d] Connecting to %q", workId, uri)
+	owm.LogDbg("[Worker %d] Connecting to %q", workId, uri)
 
 	// XXX Move this in a seperate function to be called
 	// On reconnection as well
 	connection, err := amqp.Dial(uri)
 	if err != nil {
-		LogErr("%s", fmt.Errorf("[Worker %d] Connection error: %s", workId, err))
+		owm.LogErr("%s", fmt.Errorf("[Worker %d] Connection error: %s", workId, err))
 		amqpStatus <- -1
 	}
 	defer cleanupConnection(cfg, workId, connection)
@@ -99,14 +100,14 @@ func AmqpWorker(cfg *Configuration, workId int, amqpStatus chan int, amqpMessage
 		message := <-amqpMessages
 
 		if cfg.Debug {
-			data := new(TestResultsProto)
+			data := new(owm.TestResultsProto)
 
 			err := proto.Unmarshal(message, data)
 			if err != nil {
-				LogErr("Could not Unmarshal message")
+				owm.LogErr("Could not Unmarshal message")
 			}
 
-			LogDbg("[Worker %d] Got message \"%+v\"", workId, data)
+			owm.LogDbg("[Worker %d] Got message \"%+v\"", workId, data)
 		}
 		publishMsg(cfg, connection, message)
 	}

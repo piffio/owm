@@ -1,4 +1,4 @@
-package main
+package owm
 
 import (
 	"fmt"
