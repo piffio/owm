@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/streadway/amqp"
+	"code.google.com/p/goprotobuf/proto"
 )
 
-func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) error {
+func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) error {
 	// Get a Channel
 	channel, err := connection.Channel()
 	if err != nil {
@@ -13,7 +14,7 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) err
 	}
 
 	// Declare the Exchange
-	LogDbg("Declaring Exchange ", cfg.Amqp.Exchange)
+	LogDbg("Declaring Exchange \"%s\"", cfg.Amqp.Exchange)
 
 	if err := channel.ExchangeDeclare(
 		cfg.Amqp.Exchange,     // name
@@ -42,9 +43,7 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg string) err
 		false,               // immediate
 		amqp.Publishing{
 			Headers:         amqp.Table{},
-			ContentType:     "text/plain",
-			ContentEncoding: "",
-			Body:            []byte(msg),
+			Body:            msg,
 			DeliveryMode:    amqp.Transient, // 1=non-persistent, 2=persistent
 			Priority:        0,              // 0-9
 		},
@@ -68,8 +67,8 @@ func cleanupConnection(cfg *Configuration, workNum int, connection *amqp.Connect
 	connection.Close()
 }
 
-func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages chan string) {
-	LogDbg("Initializing AQMP Worker %d", i)
+func AmqpWorker(cfg *Configuration, workId int, amqpStatus chan int, amqpMessages chan []byte) {
+	LogDbg("Initializing AQMP Worker %d", workId)
 
 	// Set up Worker connections
 	// "amqp://guest:guest@localhost:5672/"
@@ -80,16 +79,16 @@ func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages cha
 		cfg.Amqp.Port,
 		cfg.Amqp.Vhost)
 
-	LogDbg("[Worker %d] Connecting to %q", i, uri)
+	LogDbg("[Worker %d] Connecting to %q", workId, uri)
 
 	// XXX Move this in a seperate function to be called
 	// On reconnection as well
 	connection, err := amqp.Dial(uri)
 	if err != nil {
-		LogErr("%s", fmt.Errorf("[Worker %d] Connection error: %s", i, err))
+		LogErr("%s", fmt.Errorf("[Worker %d] Connection error: %s", workId, err))
 		amqpStatus <- -1
 	}
-	defer cleanupConnection(cfg, i, connection)
+	defer cleanupConnection(cfg, workId, connection)
 
 	// Positive value means success
 	// TODO: Use an enum to allow for different states
@@ -98,7 +97,17 @@ func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages cha
 	// Listen for new incoming messages
 	for {
 		message := <-amqpMessages
+
+		if cfg.Debug {
+			data := new(TestResultsProto)
+
+			err := proto.Unmarshal(message, data)
+			if err != nil {
+				LogErr("Could not Unmarshal message")
+			}
+
+			LogDbg("[Worker %d] Got message \"%+v\"", workId, data)
+		}
 		publishMsg(cfg, connection, message)
-		LogDbg("[Worker %d] Got message \"%s\"", i, message)
 	}
 }

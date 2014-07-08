@@ -14,7 +14,7 @@ var logErrChan = make(chan string)
 
 func LogDbg(format string, params ...interface{}) {
 	if len(params) > 0 {
-		logDbgChan <- fmt.Sprintf(format, params[0])
+		logDbgChan <- fmt.Sprintf(format, params...)
 	} else {
 		logDbgChan <- format
 	}
@@ -22,7 +22,7 @@ func LogDbg(format string, params ...interface{}) {
 
 func LogInf(format string, params ...interface{}) {
 	if len(params) > 0 {
-		logInfChan <- fmt.Sprintf(format, params[0])
+		logInfChan <- fmt.Sprintf(format, params...)
 	} else {
 		logInfChan <- format
 	}
@@ -30,7 +30,7 @@ func LogInf(format string, params ...interface{}) {
 
 func LogWarn(format string, params ...interface{}) {
 	if len(params) > 0 {
-		logWarnChan <- fmt.Sprintf(format, params[0])
+		logWarnChan <- fmt.Sprintf(format, params...)
 	} else {
 		logWarnChan <- format
 	}
@@ -38,7 +38,7 @@ func LogWarn(format string, params ...interface{}) {
 
 func LogErr(format string, params ...interface{}) {
 	if len(params) > 0 {
-		logErrChan <- fmt.Sprintf(format, params[0])
+		logErrChan <- fmt.Sprintf(format, params...)
 	} else {
 		logErrChan <- format
 	}

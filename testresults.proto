@@ -1,0 +1,8 @@
+package main;
+
+message TestResultsProto {
+	required uint64 AgentId = 1;
+	required string URI = 2;
+	required string Timestamp = 3;
+	required string TestData = 4;
+}

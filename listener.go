@@ -3,19 +3,45 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"code.google.com/p/gorest"
+	"code.google.com/p/goprotobuf/proto"
 )
 
-func handler(w http.ResponseWriter, r *http.Request, amqpMessages chan string) {
-	LogDbg("Inside handler")
-	fmt.Fprintf(w, "Hello world from my Go program!\n")
+var outChan chan []byte
 
-	amqpMessages <- "got one request"
+func (serv OwmService) PostResults(testResults TestResults) {
+	message := &TestResultsProto {
+		AgentId: proto.Uint64(testResults.AgentId),
+		URI: proto.String(testResults.URI),
+		Timestamp: proto.String(testResults.Timestamp),
+		TestData: proto.String(testResults.TestData),
+	}
+
+	data, err := proto.Marshal(message)
+
+	if err != nil {
+		LogErr("%s", fmt.Errorf("Can't Marshall message: %s", err))
+		return
+	}
+
+	outChan <- data
+
+	serv.ResponseBuilder().SetResponseCode(200)
+	return
 }
 
-func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages chan string) {
+type OwmService struct {
+	gorest.RestService `root:"/owm/" consumes:"application/json" produces:"application/json"`
+
+	postResults gorest.EndPoint `method:"POST" path:"/postResults/" postdata:"TestResults"`
+}
+
+func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages chan []byte) {
 	LogDbg("Initializing Listener Worker")
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		handler(w, r, amqpMessages)
-	})
+
+	outChan = amqpMessages
+
+	gorest.RegisterService(new(OwmService))
+	http.Handle("/",gorest.Handle())
 	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Listener.Port), nil)
 }
