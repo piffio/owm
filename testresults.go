@@ -1,7 +1,7 @@
 package main
 
 type TestResults struct {
-	AgentId	int
+	AgentId	uint64
 	URI		string
-	time 	string
+	Timestamp	string
 }

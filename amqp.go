@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/streadway/amqp"
+	"code.google.com/p/goprotobuf/proto"
 )
 
 func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) error {
@@ -42,8 +43,6 @@ func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) err
 		false,               // immediate
 		amqp.Publishing{
 			Headers:         amqp.Table{},
-			ContentType:     "text/plain",
-			ContentEncoding: "",
 			Body:            msg,
 			DeliveryMode:    amqp.Transient, // 1=non-persistent, 2=persistent
 			Priority:        0,              // 0-9
@@ -68,8 +67,8 @@ func cleanupConnection(cfg *Configuration, workNum int, connection *amqp.Connect
 	connection.Close()
 }
 
-func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages chan []byte) {
-	LogDbg("Initializing AQMP Worker %d", i)
+func AmqpWorker(cfg *Configuration, workId int, amqpStatus chan int, amqpMessages chan []byte) {
+	LogDbg("Initializing AQMP Worker %d", workId)
 
 	// Set up Worker connections
 	// "amqp://guest:guest@localhost:5672/"
@@ -80,16 +79,16 @@ func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages cha
 		cfg.Amqp.Port,
 		cfg.Amqp.Vhost)
 
-	LogDbg("[Worker %d] Connecting to %q", i, uri)
+	LogDbg("[Worker %d] Connecting to %q", workId, uri)
 
 	// XXX Move this in a seperate function to be called
 	// On reconnection as well
 	connection, err := amqp.Dial(uri)
 	if err != nil {
-		LogErr("%s", fmt.Errorf("[Worker %d] Connection error: %s", i, err))
+		LogErr("%s", fmt.Errorf("[Worker %d] Connection error: %s", workId, err))
 		amqpStatus <- -1
 	}
-	defer cleanupConnection(cfg, i, connection)
+	defer cleanupConnection(cfg, workId, connection)
 
 	// Positive value means success
 	// TODO: Use an enum to allow for different states
@@ -99,7 +98,16 @@ func AmqpWorker(cfg *Configuration, i int, amqpStatus chan int, amqpMessages cha
 	for {
 		message := <-amqpMessages
 
-		LogDbg("[Worker %d] Got message \"%s\"", i, string(message))
+		if cfg.Debug {
+			data := new(TestResultsProto)
+
+			err := proto.Unmarshal(message, data)
+			if err != nil {
+				LogErr("Could not Unmarshal message")
+			}
+
+			LogDbg(fmt.Sprintf("[Worker %d] Got message \"%+v\"", workId, data))
+		}
 		publishMsg(cfg, connection, message)
 	}
 }
