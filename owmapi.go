@@ -9,7 +9,7 @@ import (
 func main() {
 	// Parse cmdline args
 	cmd_help := getopt.BoolLong("help", 'h', "", "Show command help")
-	cmd_cfg := getopt.StringLong("config", 'c', "owm-srv.json", "Config file")
+	cmd_cfg := getopt.StringLong("config", 'c', "owmapi.json", "Config file")
 
 	var opts = getopt.CommandLine
 	opts.Parse(os.Args)

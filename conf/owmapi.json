@@ -17,7 +17,7 @@
   "Log": {
 	"Type": "syslog",
 	"SyslogIdent": "owm",
-	"LogFile": "/tmp/owm-srv.log"
+	"LogFile": "/tmp/owmapi.log"
   },
   "Debug": true
 }
