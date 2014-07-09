@@ -5,12 +5,13 @@ import (
 	"net/http"
 	"code.google.com/p/gorest"
 	"code.google.com/p/goprotobuf/proto"
+	"github.com/piffio/owmapi/protobuf"
 )
 
 var outChan chan []byte
 
-func (serv OwmService) PostResults(testResults TestResults) {
-	message := &TestResultsProto {
+func (serv OwmService) PostResults(testResults protobuf.TestResults) {
+	message := &protobuf.TestResultsProto {
 		AgentId: proto.Uint64(testResults.AgentId),
 		URI: proto.String(testResults.URI),
 		Timestamp: proto.String(testResults.Timestamp),
