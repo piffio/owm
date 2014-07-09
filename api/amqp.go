@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"code.google.com/p/goprotobuf/proto"
+	"github.com/piffio/owmapi/protobuf"
 )
 
 func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) error {
@@ -99,7 +100,7 @@ func AmqpWorker(cfg *Configuration, workId int, amqpStatus chan int, amqpMessage
 		message := <-amqpMessages
 
 		if cfg.Debug {
-			data := new(TestResultsProto)
+			data := new(protobuf.TestResultsProto)
 
 			err := proto.Unmarshal(message, data)
 			if err != nil {

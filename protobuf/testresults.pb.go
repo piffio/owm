@@ -3,7 +3,7 @@
 // DO NOT EDIT!
 
 /*
-Package main is a generated protocol buffer package.
+Package protobuf is a generated protocol buffer package.
 
 It is generated from these files:
 	testresults.proto
@@ -11,7 +11,7 @@ It is generated from these files:
 It has these top-level messages:
 	TestResultsProto
 */
-package main
+package protobuf
 
 import proto "code.google.com/p/goprotobuf/proto"
 import math "math"

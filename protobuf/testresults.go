@@ -1,4 +1,4 @@
-package main
+package protobuf
 
 type TestResults struct {
 	AgentId	uint64
