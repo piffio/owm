@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"code.google.com/p/goprotobuf/proto"
-	"github.com/piffio/owmapi/protobuf"
+	"github.com/piffio/owm/protobuf"
 )
 
 func publishMsg(cfg *Configuration, connection *amqp.Connection, msg []byte) error {
