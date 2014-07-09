@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"code.google.com/p/gorest"
 	"code.google.com/p/goprotobuf/proto"
-	"github.com/piffio/owmapi/protobuf"
+	"github.com/piffio/owm/protobuf"
 )
 
 var outChan chan []byte

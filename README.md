@@ -1,4 +1,9 @@
-OwmAPI
-=======
+OWM - Open Web Monitoring
+=========================
 
-This is the API daemon for the OWM framework
+OWM is a project aimed as building a distributed monitoring
+system for web sites.
+
+The goal is to use Go for the whole stack, as well as proven
+Free Software tools for handling message queuing (RabbitMQ),
+database storage (PostgreSQL), etc.
