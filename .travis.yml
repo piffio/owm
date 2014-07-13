@@ -3,4 +3,7 @@ go:
   - 1.2
   - 1.3
 install: go get -d ./...
+before_script: ./travisci/startup.sh
 script: make test
+services:
+  - rabbitmq
