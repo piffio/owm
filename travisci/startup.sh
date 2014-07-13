@@ -2,8 +2,8 @@
 
 TRAVISDIR=`dirname $0`
 cd ${TRAVISDIR}
-PWD=`pwd`
-
-rabbitmq-plugins enable rabbitmq_management
-rabbitmqadmin -q import ${PWD}/rabbit.config
+ABSP=${PWD}
 cd -
+
+sudo rabbitmq-plugins enable rabbitmq_management
+sudo rabbitmqadmin -v import ${PWD}/rabbit.config
