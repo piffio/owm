@@ -1,10 +1,11 @@
-package main
+package log
 
 import (
 	"fmt"
 	"log"
 	"log/syslog"
 	"os"
+	"github.com/piffio/owm/config"
 )
 
 var logDbgChan = make(chan string)
@@ -45,7 +46,7 @@ func LogErr(format string, params ...interface{}) {
 }
 
 // Main goroutine that handles log spooling
-func LoggerWorker(cfg *Configuration) {
+func LoggerWorker(cfg *config.Configuration) {
 	var logf *log.Logger
 	var logs *syslog.Writer
 	var logPrefix string

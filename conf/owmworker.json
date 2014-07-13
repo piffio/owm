@@ -1,7 +1,4 @@
 {
-  "Listener": {
-    "Port": 9999
-  },
   "Amqp": {
     "Type": "rabbitmq",
     "Host": "localhost",
@@ -16,8 +13,8 @@
   },
   "Log": {
 	"Type": "syslog",
-	"SyslogIdent": "owmapi",
-	"LogFile": "/tmp/owmapi.log"
+	"SyslogIdent": "owmworker",
+	"LogFile": "/tmp/owmworker.log"
   },
   "Debug": true
 }

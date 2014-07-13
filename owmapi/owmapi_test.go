@@ -5,10 +5,13 @@ import (
 	"testing"
 	"github.com/rcrowley/go-tigertonic/mocking"
 	"github.com/piffio/owm/protobuf"
+	"github.com/piffio/owm/amqp"
+	"github.com/piffio/owm/config"
+	"github.com/piffio/owm/log"
 )
 
 var (
-	cfg *Configuration
+	cfg *config.Configuration
 	amqpStatus = make(chan int)
 	amqpMessages = make(chan []byte)
 	err error
@@ -16,22 +19,19 @@ var (
 
 func TestReadConfig(t *testing.T) {
 	cfg_file := "../conf/owmapi.json"
-	cfg, err = ReadConfig(cfg_file)
-	if nil != err {
-		t.Fatal("Cannot read config", cfg_file)
-	}
+	cfg = config.ReadConfig(cfg_file)
 
 	if cfg.Amqp.Workers <= 0 {
 		t.Fatal("Missing AMQP configuration")
 	}
 
-	go LoggerWorker(cfg)
+	go log.LoggerWorker(cfg)
 }
 
 func Test2AMQPUp(t *testing.T) {
 	i := 0
 	for i < cfg.Amqp.Workers {
-		go AmqpWorker(cfg, i, amqpStatus, amqpMessages)
+		go amqp.AmqpPublisher(cfg, i, amqpStatus, amqpMessages)
 		i++
 	}
 

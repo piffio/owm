@@ -2,7 +2,9 @@ package main
 
 import (
 	"code.google.com/p/getopt"
-	"fmt"
+	"github.com/piffio/owm/amqp"
+	"github.com/piffio/owm/config"
+	"github.com/piffio/owm/log"
 	"os"
 )
 
@@ -19,26 +21,18 @@ func main() {
 		os.Exit(0)
 	}
 
-	cfg, err := ReadConfig(*cmd_cfg)
+	cfg := config.ReadConfig(*cmd_cfg)
 
-	if err != nil {
-		fmt.Println("Failed to read config file", *cmd_cfg)
-		os.Exit(1)
-	}
-
-	go LoggerWorker(cfg)
-
-	LogDbg("Successfully parsed file %s", *cmd_cfg)
-	// XXX pretty print the parsed conf in debug LogDbg(cfg)
+	go log.LoggerWorker(cfg)
 
 	// Create RabbitMQ workers
 	amqpStatus := make(chan int)
 	amqpMessages := make(chan []byte)
-	LogDbg("Initializing AQMP Workers")
+	log.LogDbg("Initializing AQMP Publishers")
 
 	i := 0
 	for i < cfg.Amqp.Workers {
-		go AmqpWorker(cfg, i, amqpStatus, amqpMessages)
+		go amqp.AmqpPublisher(cfg, i, amqpStatus, amqpMessages)
 		i++
 	}
 
@@ -47,7 +41,7 @@ func main() {
 	for i < cfg.Amqp.Workers {
 		ready := <-amqpStatus
 		if ready < 0 {
-			LogErr("Could not initialize AMQP workers, exiting")
+			log.LogErr("Could not initialize AMQP workers, exiting")
 			os.Exit(1)
 		}
 		i++

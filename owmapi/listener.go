@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"code.google.com/p/goprotobuf/proto"
 	"github.com/piffio/owm/protobuf"
+	"github.com/piffio/owm/config"
+	"github.com/piffio/owm/log"
 	"github.com/rcrowley/go-tigertonic"
 )
 
@@ -25,7 +27,7 @@ func postResultsHandler(u *url.URL, h http.Header, rq *protobuf.TestResults) (in
 	data, err := proto.Marshal(message)
 
 	if err != nil {
-		LogErr("%s", fmt.Errorf("Can't Marshall message: %s", err))
+		log.LogErr("%s", fmt.Errorf("Can't Marshall message: %s", err))
 		// XXX return
 	}
 
@@ -44,13 +46,13 @@ func postResultsHandler(u *url.URL, h http.Header, rq *protobuf.TestResults) (in
 func ListenerStatus(listenerStatus chan string) {
 	select {
 	case tag := <-listenerStatus:
-		LogDbg("Received status request: %s", tag)
+		log.LogDbg("Received status request: %s", tag)
 		listenerStatus <- "running"
 	}
 }
 
-func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages chan []byte) {
-	LogDbg("Initializing Listener Worker")
+func ListenerWorker(cfg *config.Configuration, listenerStatus chan string, amqpMessages chan []byte) {
+	log.LogDbg("Initializing Listener Worker")
 
 	outChan = amqpMessages
 
