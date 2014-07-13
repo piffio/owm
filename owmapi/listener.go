@@ -3,38 +3,50 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"code.google.com/p/gorest"
+	"net/url"
 	"code.google.com/p/goprotobuf/proto"
 	"github.com/piffio/owm/protobuf"
+	"github.com/rcrowley/go-tigertonic"
 )
 
-var outChan chan []byte
+var (
+	outChan chan []byte
+	mux *tigertonic.TrieServeMux
+)
 
-func (serv OwmService) PostResults(testResults protobuf.TestResults) {
+func postResultsHandler(u *url.URL, h http.Header, rq *protobuf.TestResults) (int, http.Header, *protobuf.TestResults, error) {
 	message := &protobuf.TestResultsProto {
-		AgentId: proto.Uint64(testResults.AgentId),
-		URI: proto.String(testResults.URI),
-		Timestamp: proto.String(testResults.Timestamp),
-		TestData: proto.String(testResults.TestData),
+		AgentId: proto.Uint64(rq.AgentId),
+		URI: proto.String(rq.URI),
+		Timestamp: proto.String(rq.Timestamp),
+		TestData: proto.String(rq.TestData),
 	}
 
 	data, err := proto.Marshal(message)
 
 	if err != nil {
 		LogErr("%s", fmt.Errorf("Can't Marshall message: %s", err))
-		return
+		// XXX return
 	}
 
 	outChan <- data
 
-	serv.ResponseBuilder().SetResponseCode(200)
-	return
+	return http.StatusCreated, http.Header{
+		"Content-Location": {fmt.Sprintf(
+			"%s://%s/1.0/postResults/%s", // TODO Don't hard-code this.
+			u.Scheme,
+			u.Host,
+			rq.AgentId,
+		)},
+	}, rq, nil
 }
 
-type OwmService struct {
-	gorest.RestService `root:"/owm/" consumes:"application/json" produces:"application/json"`
-
-	postResults gorest.EndPoint `method:"POST" path:"/postResults/" postdata:"TestResults"`
+func ListenerStatus(listenerStatus chan string) {
+	select {
+	case tag := <-listenerStatus:
+		LogDbg("Received status request: %s", tag)
+		listenerStatus <- "running"
+	}
 }
 
 func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages chan []byte) {
@@ -42,7 +54,18 @@ func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages
 
 	outChan = amqpMessages
 
-	gorest.RegisterService(new(OwmService))
-	http.Handle("/",gorest.Handle())
-	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Listener.Port), nil)
+	mux = tigertonic.NewTrieServeMux()
+	mux.HandleNamespace("/owm", mux)
+
+	mux.Handle("GET", "/version", tigertonic.Version("0.1"))
+
+	mux.Handle(
+		"POST",
+		"/postResults",
+		tigertonic.Timed(tigertonic.Marshaled(postResultsHandler), "POST-results", nil),
+	)
+
+	go ListenerStatus(listenerStatus)
+
+	tigertonic.NewServer(fmt.Sprintf(":%d", cfg.Listener.Port), tigertonic.Logged(mux, nil)).ListenAndServe()
 }

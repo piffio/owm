@@ -1,0 +1,13 @@
+language: go
+go:
+  - 1.2
+  - 1.3
+install: go get -d ./...
+before_script:
+  - sudo rabbitmq-plugins enable rabbitmq_management
+  - wget http://guest:guest@localhost:15672/cli/rabbitmqadmin
+  - chmod a+x rabbitmqadmin
+  - sudo ./rabbitmqadmin import conf/rabbitmq-test-conf.json
+script: make test
+services:
+  - rabbitmq
