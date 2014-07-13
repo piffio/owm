@@ -9,7 +9,10 @@ import (
 	"github.com/rcrowley/go-tigertonic"
 )
 
-var outChan chan []byte
+var (
+	outChan chan []byte
+	mux *tigertonic.TrieServeMux
+)
 
 func postResultsHandler(u *url.URL, h http.Header, rq *protobuf.TestResults) (int, http.Header, *protobuf.TestResults, error) {
 	message := &protobuf.TestResultsProto {
@@ -38,12 +41,20 @@ func postResultsHandler(u *url.URL, h http.Header, rq *protobuf.TestResults) (in
 	}, rq, nil
 }
 
+func ListenerStatus(listenerStatus chan string) {
+	select {
+	case tag := <-listenerStatus:
+		LogDbg("Received status request: %s", tag)
+		listenerStatus <- "running"
+	}
+}
+
 func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages chan []byte) {
 	LogDbg("Initializing Listener Worker")
 
 	outChan = amqpMessages
 
-	mux := tigertonic.NewTrieServeMux()
+	mux = tigertonic.NewTrieServeMux()
 	mux.HandleNamespace("/owm", mux)
 
 	mux.Handle("GET", "/version", tigertonic.Version("0.1"))
@@ -53,6 +64,8 @@ func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages
 		"/postResults",
 		tigertonic.Timed(tigertonic.Marshaled(postResultsHandler), "POST-results", nil),
 	)
+
+	go ListenerStatus(listenerStatus)
 
 	tigertonic.NewServer(fmt.Sprintf(":%d", cfg.Listener.Port), tigertonic.Logged(mux, nil)).ListenAndServe()
 }
