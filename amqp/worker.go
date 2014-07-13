@@ -1,15 +1,16 @@
 package amqp
 
 import (
-	"fmt"
-	"github.com/streadway/amqp"
-	"code.google.com/p/goprotobuf/proto"
-	"github.com/piffio/owm/protobuf"
+	//"fmt"
+	//"github.com/streadway/amqp"
+	//"code.google.com/p/goprotobuf/proto"
+	//"github.com/piffio/owm/protobuf"
 	"github.com/piffio/owm/config"
-	"github.com/piffio/owm/log"
+	//"github.com/piffio/owm/log"
 )
 
 func AmqpWorker(cfg *config.Configuration, workId int, amqpStatus chan int, amqpMessages chan []byte) {
+	/*
 	log.LogDbg("Initializing AQMP Publisher %d", workId)
 
 	// Set up Worker connections
@@ -52,4 +53,5 @@ func AmqpWorker(cfg *config.Configuration, workId int, amqpStatus chan int, amqp
 		}
 		publishMsg(cfg, connection, message)
 	}
+	*/
 }

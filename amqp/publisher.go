@@ -2,18 +2,19 @@ package amqp
 
 import (
 	"fmt"
-	"github.com/streadway/amqp"
+	"os"
 	"code.google.com/p/goprotobuf/proto"
 	"github.com/piffio/owm/protobuf"
 	"github.com/piffio/owm/config"
 	"github.com/piffio/owm/log"
 )
 
-func AmqpPublisher(cfg *config.Configuration, workId int, amqpStatus chan int, amqpMessages chan []byte) {
-	log.LogDbg("Initializing AQMP Publisher %d", workId)
+func AmqpPublisher(cfg *config.Configuration, id int, amqpStatus chan int, amqpMessages chan []byte) {
+	var workerId = fmt.Sprintf("Publisher %d", id)
+	log.LogDbg("Initializing AQMP %s", workerId)
 
-	// Set up Worker connections
-	// "amqp://guest:guest@localhost:5672/"
+	// Set up Publisher connections
+	// syntax: "amqp://user:passwd@host:port/vhost"
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%d/%s",
 		cfg.Amqp.User,
 		cfg.Amqp.Passwd,
@@ -21,25 +22,19 @@ func AmqpPublisher(cfg *config.Configuration, workId int, amqpStatus chan int, a
 		cfg.Amqp.Port,
 		cfg.Amqp.Vhost)
 
-	log.LogDbg("[Worker %d] Connecting to %q", workId, uri)
-
-	// XXX Move this in a seperate function to be called
-	// On reconnection as well
-	connection, err := amqp.Dial(uri)
+	connection, amqpConnClosed, err := OpenConnection(uri, workerId)
 	if err != nil {
-		log.LogErr("%s", fmt.Errorf("[Worker %d] Connection error: %s", workId, err))
-		amqpStatus <- -1
+		os.Exit(1)
 	}
-	defer cleanupConnection(cfg, workId, connection)
+	log.LogDbg("[%s] Connection established", workerId)
+	defer CleanupConnection(workerId, connection)
 
 	// Positive value means success
-	// TODO: Use an enum to allow for different states
 	amqpStatus <- 1
 
 	// Listen for new incoming messages
-	for {
-		message := <-amqpMessages
-
+	select {
+	case message := <-amqpMessages:
 		if cfg.Debug {
 			data := new(protobuf.TestResultsProto)
 
@@ -48,8 +43,10 @@ func AmqpPublisher(cfg *config.Configuration, workId int, amqpStatus chan int, a
 				log.LogErr("Could not Unmarshal message")
 			}
 
-			log.LogDbg("[Worker %d] Got message \"%+v\"", workId, data)
+			log.LogDbg("[%s] Got message \"%+v\"", workerId, data)
 		}
-		publishMsg(cfg, connection, message)
+		publishMsg(connection, cfg.Amqp.Exchange, cfg.Amqp.ExchangeType, cfg.Amqp.RoutingKey, message)
+	case err := <-amqpConnClosed:
+		Reconnect(uri, workerId, connection, amqpConnClosed, err)
 	}
 }

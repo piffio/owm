@@ -2,12 +2,12 @@ package amqp
 
 import (
 	"fmt"
+	"time"
 	"github.com/streadway/amqp"
-	"github.com/piffio/owm/config"
 	"github.com/piffio/owm/log"
 )
 
-func publishMsg(cfg *config.Configuration, connection *amqp.Connection, msg []byte) error {
+func publishMsg(connection *amqp.Connection, exchange string, exchangeType string, routingKey string, msg []byte) error {
 	// Get a Channel
 	channel, err := connection.Channel()
 	if err != nil {
@@ -15,11 +15,11 @@ func publishMsg(cfg *config.Configuration, connection *amqp.Connection, msg []by
 	}
 
 	// Declare the Exchange
-	log.LogDbg("Declaring Exchange \"%s\"", cfg.Amqp.Exchange)
+	log.LogDbg("Declaring Exchange \"%s\"", exchange)
 
 	if err := channel.ExchangeDeclare(
-		cfg.Amqp.Exchange,     // name
-		cfg.Amqp.ExchangeType, // type
+		exchange,     // name
+		exchangeType, // type
 		true,  // durable
 		false, // auto-deleted
 		false, // internal
@@ -38,8 +38,8 @@ func publishMsg(cfg *config.Configuration, connection *amqp.Connection, msg []by
 
 	// Send the Message
 	if err = channel.Publish(
-		cfg.Amqp.Exchange,   // publish to an exchange
-		cfg.Amqp.RoutingKey, // routing to 0 or more queues
+		exchange,     // name
+		routingKey,   // routing to 0 or more queues
 		false,               // mandatory
 		false,               // immediate
 		amqp.Publishing{
@@ -63,7 +63,32 @@ func publishMsg(cfg *config.Configuration, connection *amqp.Connection, msg []by
 	return nil
 }
 
-func cleanupConnection(cfg *config.Configuration, workNum int, connection *amqp.Connection) {
-	log.LogDbg("[Worker %d] Closing connection", workNum)
+func OpenConnection(amqpURI string, workerId string) (*amqp.Connection, chan *amqp.Error, error) {
+	log.LogDbg("[%s] Connecting to %q", workerId, amqpURI)
+	connection, err := amqp.Dial(amqpURI)
+	if err != nil {
+		log.LogErr("%s", fmt.Errorf("[%s] Connection error: %s", workerId, err))
+	}
+	closed := connection.NotifyClose(make(chan *amqp.Error))
+
+	return connection, closed, err
+}
+
+func Reconnect(amqpURI string, workerId string, conn *amqp.Connection, amqpConnClosed chan *amqp.Error, err *amqp.Error) {
+	var connErr error
+
+	log.LogErr("Connection closed with error: [%d] %s", err.Code, err.Reason)
+
+	for {
+		conn, amqpConnClosed, connErr = OpenConnection(amqpURI, workerId)
+		if connErr != nil {
+			log.LogWarn("Reconnect faled: [%s], sleeping...", connErr)
+			time.Sleep(2)
+		}
+	}
+}
+
+func CleanupConnection(workerId string, connection *amqp.Connection) {
+	log.LogDbg("[%s] Closing connection", workerId)
 	connection.Close()
 }
