@@ -6,4 +6,6 @@ ABSP=${PWD}
 cd -
 
 sudo rabbitmq-plugins enable rabbitmq_management
-sudo rabbitmqadmin -v import ${PWD}/rabbit.config
+wget http://guest:guest@localhost:55672/cli/rabbitmqadmin
+chmod a+x rabbitmqadmin
+sudo ./rabbitmqadmin -v import ${PWD}/rabbit.config
