@@ -21,7 +21,7 @@ type amqpCfg struct {
 	Passwd       string
 	Exchange     string
 	ExchangeType string
-	Queue     string
+	Queue        string
 	RoutingKey   string
 	BindingKey   string
 	Workers      int
@@ -41,7 +41,7 @@ type Configuration struct {
 	Log      logCfg
 }
 
-func ReadConfig(f string) (*Configuration) {
+func ReadConfig(f string) *Configuration {
 	file, _ := os.Open(f)
 	decoder := json.NewDecoder(file)
 	configuration := Configuration{}

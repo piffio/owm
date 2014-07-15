@@ -1,12 +1,12 @@
 package amqp
 
 import (
-	"fmt"
-	"os"
 	"code.google.com/p/goprotobuf/proto"
-	"github.com/piffio/owm/protobuf"
+	"fmt"
 	"github.com/piffio/owm/config"
 	"github.com/piffio/owm/log"
+	"github.com/piffio/owm/protobuf"
+	"os"
 )
 
 func AmqpPublisher(cfg *config.Configuration, id int, amqpStatus chan int, amqpMessages chan []byte) {

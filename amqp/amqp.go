@@ -2,10 +2,10 @@ package amqp
 
 import (
 	"fmt"
+	"github.com/piffio/owm/log"
+	"github.com/streadway/amqp"
 	"os"
 	"time"
-	"github.com/streadway/amqp"
-	"github.com/piffio/owm/log"
 )
 
 type queueHandler func(<-chan amqp.Delivery)
@@ -23,11 +23,11 @@ func publishMsg(connection *amqp.Connection, exchange string, exchangeType strin
 	if err := channel.ExchangeDeclare(
 		exchange,     // name
 		exchangeType, // type
-		true,  // durable
-		false, // auto-deleted
-		false, // internal
-		false, // noWait
-		nil,   // arguments
+		true,         // durable
+		false,        // auto-deleted
+		false,        // internal
+		false,        // noWait
+		nil,          // arguments
 	); err != nil {
 		return fmt.Errorf("Exchange Declare: %s", err)
 	}
@@ -41,15 +41,15 @@ func publishMsg(connection *amqp.Connection, exchange string, exchangeType strin
 
 	// Send the Message
 	if err = channel.Publish(
-		exchange,     // name
-		routingKey,   // routing to 0 or more queues
-		false,               // mandatory
-		false,               // immediate
+		exchange,   // name
+		routingKey, // routing to 0 or more queues
+		false,      // mandatory
+		false,      // immediate
 		amqp.Publishing{
-			Headers:         amqp.Table{},
-			Body:            msg,
-			DeliveryMode:    amqp.Transient, // 1=non-persistent, 2=persistent
-			Priority:        0,              // 0-9
+			Headers:      amqp.Table{},
+			Body:         msg,
+			DeliveryMode: amqp.Transient, // 1=non-persistent, 2=persistent
+			Priority:     0,              // 0-9
 		},
 	); err != nil {
 		return fmt.Errorf("Exchange Publish: %s", err)
@@ -105,7 +105,7 @@ func ConsumeQueue(connection *amqp.Connection, exchange string, exchangeType str
 
 	if err = channel.QueueBind(
 		queue.Name, // name of the queue
-		bindingKey,        // bindingKey
+		bindingKey, // bindingKey
 		exchange,   // sourceExchange
 		false,      // noWait
 		nil,        // arguments
@@ -116,7 +116,7 @@ func ConsumeQueue(connection *amqp.Connection, exchange string, exchangeType str
 	log.LogInf("Queue bound to Exchange, starting Consume (consumer tag %q)", tag)
 	deliveries, err := channel.Consume(
 		queue.Name, // name
-		tag,      // consumerTag,
+		tag,        // consumerTag,
 		false,      // noAck
 		false,      // exclusive
 		false,      // noLocal
@@ -129,7 +129,6 @@ func ConsumeQueue(connection *amqp.Connection, exchange string, exchangeType str
 
 	go handler(deliveries)
 }
-
 
 func OpenConnection(amqpURI string, workerId string) (*amqp.Connection, error) {
 	log.LogDbg("[%s] Connecting to %q", workerId, amqpURI)

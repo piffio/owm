@@ -1,13 +1,13 @@
 package amqp
 
 import (
-	"fmt"
-	"os"
 	"code.google.com/p/goprotobuf/proto"
-	"github.com/piffio/owm/protobuf"
-	"github.com/streadway/amqp"
+	"fmt"
 	"github.com/piffio/owm/config"
 	"github.com/piffio/owm/log"
+	"github.com/piffio/owm/protobuf"
+	"github.com/streadway/amqp"
+	"os"
 )
 
 func AmqpWorker(cfg *config.Configuration, workId int, amqpStatus chan int) {
@@ -41,7 +41,7 @@ func AmqpWorker(cfg *config.Configuration, workId int, amqpStatus chan int) {
 func handle(deliveries <-chan amqp.Delivery) {
 	for d := range deliveries {
 		message := new(protobuf.TestResultsProto)
-		err:= proto.Unmarshal(d.Body, message)
+		err := proto.Unmarshal(d.Body, message)
 		if err != nil {
 			log.LogErr("Could not marshal message: %q", d.Body)
 		} else {
@@ -51,7 +51,7 @@ func handle(deliveries <-chan amqp.Delivery) {
 				d.DeliveryTag,
 				message,
 			)
-	}
+		}
 		d.Ack(false)
 	}
 }

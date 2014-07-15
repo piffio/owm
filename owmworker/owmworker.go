@@ -1,11 +1,11 @@
 package main
 
 import (
-	"os"
 	"code.google.com/p/getopt"
 	"github.com/piffio/owm/amqp"
 	"github.com/piffio/owm/config"
 	"github.com/piffio/owm/log"
+	"os"
 )
 
 func main() {

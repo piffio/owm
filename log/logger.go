@@ -2,10 +2,10 @@ package log
 
 import (
 	"fmt"
+	"github.com/piffio/owm/config"
 	"log"
 	"log/syslog"
 	"os"
-	"github.com/piffio/owm/config"
 )
 
 var logDbgChan = make(chan string)

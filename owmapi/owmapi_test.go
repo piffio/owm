@@ -1,20 +1,20 @@
 package main
 
 import (
-	"net/http"
-	"testing"
-	"github.com/rcrowley/go-tigertonic/mocking"
-	"github.com/piffio/owm/protobuf"
 	"github.com/piffio/owm/amqp"
 	"github.com/piffio/owm/config"
 	"github.com/piffio/owm/log"
+	"github.com/piffio/owm/protobuf"
+	"github.com/rcrowley/go-tigertonic/mocking"
+	"net/http"
+	"testing"
 )
 
 var (
-	cfg *config.Configuration
-	amqpStatus = make(chan int)
+	cfg          *config.Configuration
+	amqpStatus   = make(chan int)
 	amqpMessages = make(chan []byte)
-	err error
+	err          error
 )
 
 func TestReadConfig(t *testing.T) {
@@ -50,7 +50,7 @@ func TestListernerUp(t *testing.T) {
 	go ListenerWorker(cfg, listenerStatus, amqpMessages)
 	listenerStatus <- "status"
 	status := <-listenerStatus
-	if (status != "running") {
+	if status != "running" {
 		t.Fatal(status)
 	}
 }
