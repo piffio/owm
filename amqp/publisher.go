@@ -33,8 +33,7 @@ func AmqpPublisher(cfg *config.Configuration, id int, amqpStatus chan int, amqpM
 	amqpStatus <- 1
 
 	// Listen for new incoming messages
-	select {
-	case message := <-amqpMessages:
+	for message := range amqpMessages {
 		if cfg.Debug {
 			data := new(protobuf.TestResultsProto)
 
