@@ -22,7 +22,7 @@ func AmqpPublisher(cfg *config.Configuration, id int, amqpStatus chan int, amqpM
 		cfg.Amqp.Port,
 		cfg.Amqp.Vhost)
 
-	connection, amqpConnClosed, err := OpenConnection(uri, workerId)
+	connection, err := OpenConnection(uri, workerId)
 	if err != nil {
 		os.Exit(1)
 	}
@@ -46,7 +46,5 @@ func AmqpPublisher(cfg *config.Configuration, id int, amqpStatus chan int, amqpM
 			log.LogDbg("[%s] Got message \"%+v\"", workerId, data)
 		}
 		publishMsg(connection, cfg.Amqp.Exchange, cfg.Amqp.ExchangeType, cfg.Amqp.RoutingKey, message)
-	case err := <-amqpConnClosed:
-		Reconnect(uri, workerId, connection, amqpConnClosed, err)
 	}
 }

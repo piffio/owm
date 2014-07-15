@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 	"code.google.com/p/getopt"
-	//"github.com/piffio/owm/amqp"
+	"github.com/piffio/owm/amqp"
 	"github.com/piffio/owm/config"
 	"github.com/piffio/owm/log"
 )
@@ -25,13 +25,25 @@ func main() {
 
 	go log.LoggerWorker(cfg)
 
-	//amqpStatus := make(chan int)
+	amqpStatus := make(chan int)
 	//amqpMessages := make(chan []byte)
 	log.LogDbg("Initializing AQMP Workers")
 
 	i := 0
 	for i < cfg.Amqp.Workers {
-		//go amqp.AmqpWorker(cfg, i, amqpStatus, amqpMessages)
+		go amqp.AmqpWorker(cfg, i, amqpStatus)
 		i++
 	}
+
+	i = 0
+	for i < cfg.Amqp.Workers {
+		ready := <-amqpStatus
+		if ready < 0 {
+			log.LogErr("Could not initialize AMQP workers, exiting")
+			os.Exit(1)
+		}
+		i++
+	}
+
+	select {}
 }

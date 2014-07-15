@@ -1,17 +1,18 @@
 package amqp
 
 import (
-	//"fmt"
-	//"github.com/streadway/amqp"
-	//"code.google.com/p/goprotobuf/proto"
-	//"github.com/piffio/owm/protobuf"
+	"fmt"
+	"os"
+	"code.google.com/p/goprotobuf/proto"
+	"github.com/piffio/owm/protobuf"
+	"github.com/streadway/amqp"
 	"github.com/piffio/owm/config"
-	//"github.com/piffio/owm/log"
+	"github.com/piffio/owm/log"
 )
 
-func AmqpWorker(cfg *config.Configuration, workId int, amqpStatus chan int, amqpMessages chan []byte) {
-	/*
-	log.LogDbg("Initializing AQMP Publisher %d", workId)
+func AmqpWorker(cfg *config.Configuration, workId int, amqpStatus chan int) {
+	var workerId = fmt.Sprintf("Worker %d", workId)
+	log.LogDbg("Initializing AQMP %s", workerId)
 
 	// Set up Worker connections
 	// "amqp://guest:guest@localhost:5672/"
@@ -22,36 +23,35 @@ func AmqpWorker(cfg *config.Configuration, workId int, amqpStatus chan int, amqp
 		cfg.Amqp.Port,
 		cfg.Amqp.Vhost)
 
-	log.LogDbg("[Worker %d] Connecting to %q", workId, uri)
-
-	// XXX Move this in a seperate function to be called
-	// On reconnection as well
-	connection, err := amqp.Dial(uri)
+	connection, err := OpenConnection(uri, workerId)
 	if err != nil {
-		log.LogErr("%s", fmt.Errorf("[Worker %d] Connection error: %s", workId, err))
-		amqpStatus <- -1
+		os.Exit(1)
 	}
-	defer cleanupConnection(cfg, workId, connection)
+	log.LogDbg("[%s] Connection established", workerId)
+	defer CleanupConnection(workerId, connection)
 
-	// Positive value means success
-	// TODO: Use an enum to allow for different states
 	amqpStatus <- 1
 
-	// Listen for new incoming messages
-	for {
-		message := <-amqpMessages
+	ConsumeQueue(connection, cfg.Amqp.Exchange, cfg.Amqp.ExchangeType, cfg.Amqp.BindingKey, cfg.Amqp.Queue, workerId, handle)
 
-		if cfg.Debug {
-			data := new(protobuf.TestResultsProto)
+	select {}
+}
 
-			err := proto.Unmarshal(message, data)
-			if err != nil {
-				log.LogErr("Could not Unmarshal message")
-			}
-
-			log.LogDbg("[Worker %d] Got message \"%+v\"", workId, data)
-		}
-		publishMsg(cfg, connection, message)
+/* XXX do something useful with the message */
+func handle(deliveries <-chan amqp.Delivery) {
+	for d := range deliveries {
+		message := new(protobuf.TestResultsProto)
+		err:= proto.Unmarshal(d.Body, message)
+		if err != nil {
+			log.LogErr("Could not marshal message: %q", d.Body)
+		} else {
+			log.LogInf(
+				"got %dB delivery: [%v] \"%+v\"",
+				len(d.Body),
+				d.DeliveryTag,
+				message,
+			)
 	}
-	*/
+		d.Ack(false)
+	}
 }

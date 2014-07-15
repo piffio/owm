@@ -21,7 +21,9 @@ type amqpCfg struct {
 	Passwd       string
 	Exchange     string
 	ExchangeType string
+	Queue     string
 	RoutingKey   string
+	BindingKey   string
 	Workers      int
 }
 
