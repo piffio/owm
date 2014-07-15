@@ -1,7 +1,8 @@
-package main
+package log
 
 import (
 	"fmt"
+	"github.com/piffio/owm/config"
 	"log"
 	"log/syslog"
 	"os"
@@ -45,7 +46,7 @@ func LogErr(format string, params ...interface{}) {
 }
 
 // Main goroutine that handles log spooling
-func LoggerWorker(cfg *Configuration) {
+func LoggerWorker(cfg *config.Configuration) {
 	var logf *log.Logger
 	var logs *syslog.Writer
 	var logPrefix string

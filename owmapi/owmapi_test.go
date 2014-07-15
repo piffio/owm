@@ -1,37 +1,37 @@
 package main
 
 import (
+	"github.com/piffio/owm/amqp"
+	"github.com/piffio/owm/config"
+	"github.com/piffio/owm/log"
+	"github.com/piffio/owm/protobuf"
+	"github.com/rcrowley/go-tigertonic/mocking"
 	"net/http"
 	"testing"
-	"github.com/rcrowley/go-tigertonic/mocking"
-	"github.com/piffio/owm/protobuf"
 )
 
 var (
-	cfg *Configuration
-	amqpStatus = make(chan int)
+	cfg          *config.Configuration
+	amqpStatus   = make(chan int)
 	amqpMessages = make(chan []byte)
-	err error
+	err          error
 )
 
 func TestReadConfig(t *testing.T) {
 	cfg_file := "../conf/owmapi.json"
-	cfg, err = ReadConfig(cfg_file)
-	if nil != err {
-		t.Fatal("Cannot read config", cfg_file)
-	}
+	cfg = config.ReadConfig(cfg_file)
 
 	if cfg.Amqp.Workers <= 0 {
 		t.Fatal("Missing AMQP configuration")
 	}
 
-	go LoggerWorker(cfg)
+	go log.LoggerWorker(cfg)
 }
 
 func Test2AMQPUp(t *testing.T) {
 	i := 0
 	for i < cfg.Amqp.Workers {
-		go AmqpWorker(cfg, i, amqpStatus, amqpMessages)
+		go amqp.AmqpPublisher(cfg, i, amqpStatus, amqpMessages)
 		i++
 	}
 
@@ -50,7 +50,7 @@ func TestListernerUp(t *testing.T) {
 	go ListenerWorker(cfg, listenerStatus, amqpMessages)
 	listenerStatus <- "status"
 	status := <-listenerStatus
-	if (status != "running") {
+	if status != "running" {
 		t.Fatal(status)
 	}
 }

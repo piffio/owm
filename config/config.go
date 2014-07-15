@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"encoding/json" // For config file
@@ -21,7 +21,9 @@ type amqpCfg struct {
 	Passwd       string
 	Exchange     string
 	ExchangeType string
+	Queue        string
 	RoutingKey   string
+	BindingKey   string
 	Workers      int
 }
 
@@ -39,13 +41,14 @@ type Configuration struct {
 	Log      logCfg
 }
 
-func ReadConfig(f string) (*Configuration, error) {
+func ReadConfig(f string) *Configuration {
 	file, _ := os.Open(f)
 	decoder := json.NewDecoder(file)
 	configuration := Configuration{}
 	err := decoder.Decode(&configuration)
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Printf("Could not open config file %s: %s\n", f, err)
+		os.Exit(1)
 	}
-	return &configuration, err
+	return &configuration
 }

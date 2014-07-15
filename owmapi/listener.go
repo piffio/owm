@@ -1,31 +1,33 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"net/url"
 	"code.google.com/p/goprotobuf/proto"
+	"fmt"
+	"github.com/piffio/owm/config"
+	"github.com/piffio/owm/log"
 	"github.com/piffio/owm/protobuf"
 	"github.com/rcrowley/go-tigertonic"
+	"net/http"
+	"net/url"
 )
 
 var (
 	outChan chan []byte
-	mux *tigertonic.TrieServeMux
+	mux     *tigertonic.TrieServeMux
 )
 
 func postResultsHandler(u *url.URL, h http.Header, rq *protobuf.TestResults) (int, http.Header, *protobuf.TestResults, error) {
-	message := &protobuf.TestResultsProto {
-		AgentId: proto.Uint64(rq.AgentId),
-		URI: proto.String(rq.URI),
+	message := &protobuf.TestResultsProto{
+		AgentId:   proto.Uint64(rq.AgentId),
+		URI:       proto.String(rq.URI),
 		Timestamp: proto.String(rq.Timestamp),
-		TestData: proto.String(rq.TestData),
+		TestData:  proto.String(rq.TestData),
 	}
 
 	data, err := proto.Marshal(message)
 
 	if err != nil {
-		LogErr("%s", fmt.Errorf("Can't Marshall message: %s", err))
+		log.LogErr("%s", fmt.Errorf("Can't Marshall message: %s", err))
 		// XXX return
 	}
 
@@ -44,13 +46,13 @@ func postResultsHandler(u *url.URL, h http.Header, rq *protobuf.TestResults) (in
 func ListenerStatus(listenerStatus chan string) {
 	select {
 	case tag := <-listenerStatus:
-		LogDbg("Received status request: %s", tag)
+		log.LogDbg("Received status request: %s", tag)
 		listenerStatus <- "running"
 	}
 }
 
-func ListenerWorker(cfg *Configuration, listenerStatus chan string, amqpMessages chan []byte) {
-	LogDbg("Initializing Listener Worker")
+func ListenerWorker(cfg *config.Configuration, listenerStatus chan string, amqpMessages chan []byte) {
+	log.LogDbg("Initializing Listener Worker")
 
 	outChan = amqpMessages
 
